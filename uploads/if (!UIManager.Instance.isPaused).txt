@@ -1,0 +1,79 @@
+if (!UIManager.Instance.isPaused)
+{
+    SprintBar.Instance.inactiveTime += (currentSpeed != sprintSpeed) ? Time.deltaTime : -SprintBar.Instance.inactiveTime;
+
+    // Zmniejsz czas sprintu tylko, gdy gracz sprintuje.
+    if (currentSpeed == sprintSpeed && isWalking)
+    {
+        PlayerState.Instance.currentSprintTime -= Time.deltaTime;
+
+        // Jeśli skończył się czas sprintu, wróć do normalnej prędkości.
+        if (PlayerState.Instance.currentSprintTime <= 0)
+        {
+            PlayerState.Instance.currentSprintTime = 0;
+            SetSpeed(walkSpeed);
+        }
+    }
+    else
+    {
+        if (PlayerState.Instance.currentSprintTime < PlayerState.Instance.maxSprintTime && !isSprinting)
+        {
+            PlayerState.Instance.currentSprintTime += Time.deltaTime / 2;
+        }
+    }
+
+    if (controller.isGrounded)
+    {
+        if (velocity.y < -fallDamageThreshold && !tookFallDamage)
+        {
+            float fallSpeed = Mathf.Abs(velocity.y);
+            float damage = Mathf.Clamp((fallSpeed - fallDamageThreshold) * damageMultiplier, 0, 100);
+            int intDamage = Mathf.RoundToInt(damage);
+            PlayerState.Instance.TakeDamage(intDamage); // Dodaj obrażenia do zdrowia gracza
+            Debug.Log($"Fall damage: {intDamage}");
+            tookFallDamage = true; // Ustaw flagę, aby uniknąć wielokrotnego zadania obrażeń
+        }
+        velocity.y = -2f; // Reset prędkości opadania
+    }
+    else
+    {
+        tookFallDamage = false; // Reset flagi, gdy gracz jest w powietrzu
+    }
+
+    Vector3 forward = playerCamera.transform.forward;
+    Vector3 right = playerCamera.transform.right;
+
+    // Wyrównaj wektory do płaszczyzny poziomej (aby uniknąć ruchu w osi Y).
+    forward.y = 0;
+    right.y = 0;
+
+    forward.Normalize();
+    right.Normalize();
+
+    Vector3 move = right * moveInput.x + forward * moveInput.y;
+
+    velocity.x = move.x * currentSpeed;
+    velocity.z = move.z * currentSpeed;
+
+    if (isJumping && controller.isGrounded)
+    {
+        velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+        isJumping = false;
+    }
+
+    velocity.y += gravity * Time.deltaTime;
+
+    controller.Move(velocity * Time.deltaTime);
+
+    if (lookInput.x != 0 || lookInput.y != 0)
+    {
+        float mouseX = lookInput.x * Time.deltaTime * mouseSensitivity;
+        float mouseY = lookInput.y * Time.deltaTime * mouseSensitivity;
+
+        transform.Rotate(Vector3.up * mouseX);
+        xRotation -= mouseY;
+        xRotation = Mathf.Clamp(xRotation, -85f, 85f);
+        yRotation += mouseX;
+        playerCamera.transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
+    }
+}

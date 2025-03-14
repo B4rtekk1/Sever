@@ -1,0 +1,18 @@
+2025-03-02 18:12:17,428 - INFO - Server started
+2025-03-02 18:12:28,529 - INFO - Listed files: ['A=(1; 2).txt', 'httpswww.google.comurlq=httpstest.o.txt', 'if (!UIManager.Instance.isPaused).txt', 'K-means.txt', 'ngrok_recovery_codes.txt', 'Nowy_Plik_2.txt', 'nowy_test.txt', 'Pseudokod.txt']
+2025-03-02 18:13:15,204 - INFO - Uploaded file: Postman-win64-Setup.exe
+2025-03-02 18:13:15,321 - INFO - Listed files: ['A=(1; 2).txt', 'httpswww.google.comurlq=httpstest.o.txt', 'if (!UIManager.Instance.isPaused).txt', 'K-means.txt', 'ngrok_recovery_codes.txt', 'Nowy_Plik_2.txt', 'nowy_test.txt', 'Postman-win64-Setup.exe', 'Pseudokod.txt']
+2025-03-02 18:17:08,625 - INFO - Server is shutting down
+2025-03-02 18:23:31,987 - INFO - Loaded 5 log entries from server_logs.txt
+2025-03-02 18:23:31,987 - INFO - Server started
+2025-03-02 18:26:35,689 - INFO - Listed files: ['A=(1; 2).txt', 'httpswww.google.comurlq=httpstest.o.txt', 'if (!UIManager.Instance.isPaused).txt', 'K-means.txt', 'ngrok_recovery_codes.txt', 'Nowy_Plik_2.txt', 'nowy_test.txt', 'Postman-win64-Setup.exe', 'Pseudokod.txt']
+2025-03-02 20:01:32,085 - INFO - Loaded 8 log entries from server_logs.txt
+2025-03-02 20:01:32,085 - INFO - Server started
+2025-03-02 20:01:46,477 - WARNING - Unauthorized access attempt from 192.168.0.22
+2025-03-02 20:02:20,284 - INFO - Listed files: ['A=(1; 2).txt', 'httpswww.google.comurlq=httpstest.o.txt', 'if (!UIManager.Instance.isPaused).txt', 'K-means.txt', 'ngrok_recovery_codes.txt', 'Nowy_Plik_2.txt', 'nowy_test.txt', 'Postman-win64-Setup.exe', 'Pseudokod.txt']
+2025-03-02 20:03:46,301 - INFO - File renamed from Nowy_Plik_2.txt to Nowy_Plik_Testowy.txt
+2025-03-02 20:04:06,644 - INFO - Listed files: ['A=(1; 2).txt', 'httpswww.google.comurlq=httpstest.o.txt', 'if (!UIManager.Instance.isPaused).txt', 'K-means.txt', 'ngrok_recovery_codes.txt', 'Nowy_Plik_Testowy.txt', 'nowy_test.txt', 'Postman-win64-Setup.exe', 'Pseudokod.txt']
+2025-03-14 19:44:23,072 - INFO - Loaded 14 log entries from ServerLogs\server_logs.txt
+2025-03-14 19:44:23,073 - INFO - Server started
+2025-03-14 19:52:17,577 - INFO - Uploaded file: moj_folder\a9d8_2_3_2025.pdf
+2025-03-14 19:55:22,762 - INFO - Server is shutting down

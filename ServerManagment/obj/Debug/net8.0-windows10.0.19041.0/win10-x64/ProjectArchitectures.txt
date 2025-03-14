@@ -1,0 +1,1 @@
+C:\Users\Bartosz Kasyna\Server\ServerManagment\ServerManagment.csproj;x64
