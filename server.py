@@ -11,11 +11,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
-API_KEY = "APIKEY123"
-KNOWN_IPS = ["192.168.0.22", "127.0.0.1"]
+API_KEY = "APIKEY123" #examlple api
+KNOWN_IPS = ["192.168.0.22", "127.0.0.1"] #local
 EMAIL_SENDER = "bartoszkasyna@gmail.com"
-EMAIL_PASSWORD = "rwcu iovk ehbw lhwj"
-EMAIL_RECEIVER = "bartoszkasyna@gmail.com"
+EMAIL_PASSWORD = "#### #### #### ####"
+EMAIL_RECEIVER = "bartoszkasyna@gmail.com" #admin mail
 LOG_FILE = "ServerLogs\server_logs.txt"
 
 log_messages = []
