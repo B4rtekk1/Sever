@@ -1,4 +1,0 @@
-K-means
-w tym przypadku wiemy ze 4 grupy
-losujemy punkt(centroid) i liczymy odlego\losci pozostalyuch punkto \w i je przypusjemy do cetroidow
-tSNE algorytm
