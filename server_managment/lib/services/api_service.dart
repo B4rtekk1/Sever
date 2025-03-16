@@ -3,7 +3,7 @@ import 'dart:io';
 
 class ApiService {
   final Dio _dio = Dio();
-  final String baseUrl = "http://localhost:5000";
+  final String baseUrl = "http://192.168.0.22:5000";
   final String apiKey = "APIKEY123";
 
   ApiService(){
@@ -34,15 +34,37 @@ class ApiService {
     }
   }
 
-  Future<void> downloadFile(String filename, String savePath) async{
+  Future<void> downloadFile(String filename, String savePath) async {
     try {
-      await _dio.download("$baseUrl/download/$filename", savePath);
-      print("Pobrano plik $filename");
-    }
-    catch (e) {
+      final directory = Directory(savePath).parent;
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+
+      // Pobierz plik
+      await _dio.download(
+        "$baseUrl/download/$filename",
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            print("Postęp pobierania: ${(received / total * 100).toStringAsFixed(0)}%");
+          }
+        },
+      );
+
+      // Sprawdź, czy plik istnieje
+      final file = File(savePath);
+      if (await file.exists()) {
+        print("Plik $filename został pomyślnie pobrany do $savePath");
+      } else {
+        throw Exception("Plik $filename nie został zapisany w $savePath");
+      }
+    } catch (e) {
       print("Błąd podczas pobierania pliku: $e");
+      rethrow;
     }
   }
+
 
   Future<String> getServerVariable() async {
     try {

@@ -11,11 +11,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
-API_KEY = "APIKEY123" #examlple api
-KNOWN_IPS = ["192.168.0.22", "127.0.0.1"] #local
-EMAIL_SENDER = "bartoszkasyna@gmail.com"
-EMAIL_PASSWORD = "#### #### #### ####"
-EMAIL_RECEIVER = "bartoszkasyna@gmail.com" #admin mail
+API_KEY = "APIKEY123" #examlple apikey
+KNOWN_IPS = ["192.168.0.22", "192.168.0.26", "192.168.0.27" "127.0.0.1"] #local ips
+EMAIL_SENDER = "bartoszkasyna@gmail.com" #admin gmail
+EMAIL_PASSWORD = "#### #### #### ####" #gmail app password
+EMAIL_RECEIVER = "bartoszkasyna@gmail.com" #app gmail
 LOG_FILE = "ServerLogs\server_logs.txt"
 
 log_messages = []
@@ -103,13 +103,13 @@ def upload_file():
     if auth_error:
         return auth_error
     file = request.files["file"]
-    requested_folder = request.form.get("folder", "")  # Pobierz folder z formularza, domyślnie pusty
+    requested_folder = request.form.get("folder", "")
     base_upload_folder = os.path.abspath(UPLOAD_FOLDER)
     full_path = os.path.abspath(os.path.join(base_upload_folder, requested_folder))
     if not full_path.startswith(base_upload_folder):
         log_to_memory_and_file("WARNING", f"Invalid folder path attempted: {requested_folder}")
         return jsonify({"error": "Invalid folder path"}), 400
-    os.makedirs(full_path, exist_ok=True)  # Utwórz folder, jeśli nie istnieje
+    os.makedirs(full_path, exist_ok=True)
     file_path = os.path.join(full_path, file.filename)
     file.save(file_path)
     relative_path = os.path.relpath(file_path, base_upload_folder)
