@@ -17,7 +17,7 @@ class FilesExplorerPage extends StatefulWidget {
 
 class _FilesExplorerPageState extends State<FilesExplorerPage> {
   List<String> files = [];
-  String currentFolder = ""; // Śledzenie aktualnego folderu
+  String currentFolder = "";
 
   @override
   void initState() {
