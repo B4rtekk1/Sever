@@ -6,13 +6,16 @@ class ApiService {
   final String baseUrl = "http://192.168.0.22:5000";
   final String apiKey = "APIKEY123";
 
-  ApiService(){
+  ApiService() {
     _dio.options.headers["X-API-KEY"] = apiKey;
   }
 
-  Future<List<String>> getFiles() async {
+  Future<List<String>> getFiles({String folderPath = ""}) async {
     try {
-      final response = await _dio.get("$baseUrl/list");
+      final response = await _dio.get(
+        "$baseUrl/list",
+        queryParameters: {"folder": folderPath},
+      );
       return List<String>.from(response.data["files"]);
     } catch (e) {
       print("Błąd podczas pobierania plików: $e");
@@ -24,7 +27,7 @@ class ApiService {
     try {
       FormData formData = FormData.fromMap({
         "file": await MultipartFile.fromFile(file.path, filename: file.path.split("/").last),
-        "folder": folder
+        "folder": folder,
       });
       final response = await _dio.post("$baseUrl/upload", data: formData);
       return response.data["message"];
@@ -41,7 +44,6 @@ class ApiService {
         await directory.create(recursive: true);
       }
 
-      // Pobierz plik
       await _dio.download(
         "$baseUrl/download/$filename",
         savePath,
@@ -52,7 +54,6 @@ class ApiService {
         },
       );
 
-      // Sprawdź, czy plik istnieje
       final file = File(savePath);
       if (await file.exists()) {
         print("Plik $filename został pomyślnie pobrany do $savePath");
@@ -65,7 +66,6 @@ class ApiService {
     }
   }
 
-
   Future<String> getServerVariable() async {
     try {
       final response = await _dio.get("$baseUrl/get_variable");
@@ -76,7 +76,6 @@ class ApiService {
     }
   }
 
-  // Aktualizacja zmiennej serwerowej
   Future<String> updateServerVariable(String newValue) async {
     try {
       final response = await _dio.post(
@@ -99,5 +98,4 @@ class ApiService {
       return "Błąd: $e";
     }
   }
-
 }

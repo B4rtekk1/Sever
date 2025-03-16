@@ -4,7 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:server_managment/services/api_service.dart';
 import 'package:open_file/open_file.dart';
-import 'package:permission_handler/permission_handler.dart'; // Dodaj ten pakiet
+import 'package:permission_handler/permission_handler.dart';
 
 class FilesExplorerPage extends StatefulWidget {
   final ApiService apiService;
@@ -17,6 +17,7 @@ class FilesExplorerPage extends StatefulWidget {
 
 class _FilesExplorerPageState extends State<FilesExplorerPage> {
   List<String> files = [];
+  String currentFolder = ""; // Śledzenie aktualnego folderu
 
   @override
   void initState() {
@@ -24,10 +25,13 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     _loadFiles();
   }
 
-  void _loadFiles() async {
-    final fileList = await widget.apiService.getFiles();
+  bool isFolder(String path) => !path.contains('.');
+
+  void _loadFiles({String folderPath = ""}) async {
+    final fileList = await widget.apiService.getFiles(folderPath: folderPath);
     setState(() {
       files = fileList;
+      currentFolder = folderPath;
     });
   }
 
@@ -35,9 +39,9 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
     if (result != null) {
       File file = File(result.files.single.path!);
-      final message = await widget.apiService.uploadFile(file, "");
+      final message = await widget.apiService.uploadFile(file, currentFolder);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      _loadFiles();
+      _loadFiles(folderPath: currentFolder);
     }
   }
 
@@ -46,7 +50,7 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     String downloadPath;
 
     if (Platform.isAndroid) {
-      if (await Permission.storage.request().isGranted || 
+      if (await Permission.storage.request().isGranted ||
           await Permission.manageExternalStorage.request().isGranted) {
         downloadPath = "/storage/emulated/0/Download/$sanitizedFilename";
       } else {
@@ -100,8 +104,17 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     }
   }
 
-  IconData _getIcon(String path) {
+  void _handleTap(String path) {
     if (path.endsWith('/')) {
+      _loadFiles(folderPath: path);
+    } else {
+      _downloadFile(path);
+    }
+  }
+
+  IconData _getIcon(String path) {
+    if (isFolder(path)) {
+      
       return Icons.folder;
     }
     final extension = path.split('.').last.toLowerCase();
@@ -132,9 +145,31 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              if (currentFolder.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    // Wróć do nadrzędnego folderu
+                    final parentFolder = currentFolder.split('/').reversed.skip(1).toList().reversed.join('/');
+                    _loadFiles(folderPath: parentFolder);
+                  },
+                ),
+              Expanded(
+                child: Text(
+                  "Folder: ${currentFolder.isEmpty ? 'Root' : currentFolder}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: FutureBuilder<List<String>>(
-            future: widget.apiService.getFiles(),
+            future: widget.apiService.getFiles(folderPath: currentFolder),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -147,11 +182,14 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
                 itemCount: files.length,
                 itemBuilder: (context, index) {
                   final file = files[index];
+                  String displayName = file.endsWith('/')
+                      ? file.substring(0, file.length - 1).split('/').last
+                      : file.split('/').last;
                   return ListTile(
                     leading: Icon(_getIcon(file)),
-                    title: Text(file.split('/').last),
+                    title: Text(displayName),
                     subtitle: Text(file),
-                    onTap: () => _downloadFile(file),
+                    onTap: () => _handleTap(file),
                   );
                 },
               );

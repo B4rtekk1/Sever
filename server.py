@@ -11,12 +11,12 @@ from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
-API_KEY = "APIKEY123" #examlple apikey
-KNOWN_IPS = ["192.168.0.22", "192.168.0.26", "192.168.0.27" "127.0.0.1"] #local ips
-EMAIL_SENDER = "bartoszkasyna@gmail.com" #admin gmail
-EMAIL_PASSWORD = "#### #### #### ####" #gmail app password
-EMAIL_RECEIVER = "bartoszkasyna@gmail.com" #app gmail
-LOG_FILE = "ServerLogs\server_logs.txt"
+API_KEY = "APIKEY123"  # przykład klucza API
+KNOWN_IPS = ["192.168.0.22", "192.168.0.26", "192.168.0.27", "127.0.0.1"]  # lokalne IP
+EMAIL_SENDER = "bartoszkasyna@gmail.com"  # admin Gmail
+EMAIL_PASSWORD = "#### #### #### ####"  # Gmail app password
+EMAIL_RECEIVER = "bartoszkasyna@gmail.com"  # odbiorca
+LOG_FILE = "ServerLogs/server_logs.txt"
 
 log_messages = []
 
@@ -83,9 +83,14 @@ def list_files():
     auth_error = check_api_key_and_ip()
     if auth_error:
         return auth_error
+    folder_path = request.args.get("folder", "")
     base_upload_folder = os.path.abspath(UPLOAD_FOLDER)
+    target_folder = os.path.abspath(os.path.join(base_upload_folder, folder_path))
+    if not target_folder.startswith(base_upload_folder):
+        log_to_memory_and_file("WARNING", f"Invalid folder path attempted: {folder_path}")
+        return jsonify({"error": "Invalid folder path"}), 400
     items = []
-    for root, dirs, files_in_dir in os.walk(base_upload_folder):
+    for root, dirs, files_in_dir in os.walk(target_folder):
         for dir_name in dirs:
             full_path = os.path.join(root, dir_name) + "/"
             relative_path = os.path.relpath(full_path, base_upload_folder)
@@ -94,7 +99,8 @@ def list_files():
             full_path = os.path.join(root, file)
             relative_path = os.path.relpath(full_path, base_upload_folder)
             items.append(relative_path)
-    log_to_memory_and_file("INFO", f"Listed items: {items}")
+        break
+    log_to_memory_and_file("INFO", f"Listed items in {folder_path}: {items}")
     return jsonify({"files": items})
 
 @app.route("/upload", methods=["POST"])
