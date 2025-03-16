@@ -1,8 +1,6 @@
 import 'package:dio/dio.dart';
 import 'dart:io';
 
-import 'package:flutter/widgets.dart';
-
 class ApiService {
   final Dio _dio = Dio();
   final String baseUrl = "http://localhost:5000";

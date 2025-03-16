@@ -84,14 +84,18 @@ def list_files():
     if auth_error:
         return auth_error
     base_upload_folder = os.path.abspath(UPLOAD_FOLDER)
-    files = []
+    items = []
     for root, dirs, files_in_dir in os.walk(base_upload_folder):
+        for dir_name in dirs:
+            full_path = os.path.join(root, dir_name) + "/"
+            relative_path = os.path.relpath(full_path, base_upload_folder)
+            items.append(relative_path)
         for file in files_in_dir:
             full_path = os.path.join(root, file)
             relative_path = os.path.relpath(full_path, base_upload_folder)
-            files.append(relative_path)
-    log_to_memory_and_file("INFO", f"Listed files: {files}")
-    return jsonify({"files": files})
+            items.append(relative_path)
+    log_to_memory_and_file("INFO", f"Listed items: {items}")
+    return jsonify({"files": items})
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
