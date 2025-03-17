@@ -153,7 +153,6 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
-                    // Wróć do nadrzędnego folderu
                     final parentFolder = currentFolder.split('/').reversed.skip(1).toList().reversed.join('/');
                     _loadFiles(folderPath: parentFolder);
                   },
