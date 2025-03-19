@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class ApiService {
   final Dio _dio = Dio();
@@ -8,6 +9,27 @@ class ApiService {
 
   ApiService() {
     _dio.options.headers["X-API-KEY"] = apiKey;
+    _addDeviceIdHeader();
+  }
+
+  Future<void> _addDeviceIdHeader() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String? deviceId;
+
+    if(Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      deviceId = androidInfo.id;
+    } else if(Platform.isWindows) {
+      WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
+      deviceId = windowsInfo.deviceId;
+    }
+
+    if (deviceId != null) {
+      _dio.options.headers["X-Device-ID"] = deviceId;
+      print("Device ID set: $deviceId");
+    } else {
+      print("Could not retrieve device ID");
+    }
   }
 
   Future<List<String>> getFiles({String folderPath = ""}) async {

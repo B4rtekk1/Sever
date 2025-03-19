@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify, send_from_directory
-import numpy as np
-from tensorflow.lite.python.interpreter import Interpreter
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -11,11 +9,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
-API_KEY = "APIKEY123"  # przykład klucza API
-KNOWN_IPS = ["192.168.0.22", "192.168.0.26", "192.168.0.27", "127.0.0.1"]  # lokalne IP
-EMAIL_SENDER = "bartoszkasyna@gmail.com"  # admin Gmail
-EMAIL_PASSWORD = "#### #### #### ####"  # Gmail app password
-EMAIL_RECEIVER = "bartoszkasyna@gmail.com"  # odbiorca
+API_KEY = "APIKEY123"  # Klucz API
+KNOWN_DEVICE_IDS = ["windows_device_id_example", "android_device_id_example"]  # Lista znanych ID urządzeń
+EMAIL_SENDER = "bartoszkasyna@gmail.com"  # Gmail nadawcy
+EMAIL_PASSWORD = "#### #### #### ####"  # Hasło aplikacji Gmail
+EMAIL_RECEIVER = "bartoszkasyna@gmail.com"  # Odbiorca
 LOG_FILE = "ServerLogs/server_logs.txt"
 
 log_messages = []
@@ -50,9 +48,9 @@ def log_to_memory_and_file(level, message):
     elif level == "ERROR":
         logger.error(message)
 
-def send_alert(ip):
+def send_alert(device_id, ip):
     subject = "New device detected"
-    body = f"Someone tried to access your files from {ip}"
+    body = f"Someone tried to access your files with device ID: {device_id} from IP: {ip}"
     msg = MIMEText(body)
     msg["Subject"] = subject
     msg["From"] = EMAIL_SENDER
@@ -66,21 +64,29 @@ def send_alert(ip):
         log_to_memory_and_file("ERROR", f"An error occurred {e}")
         print(f"An error occurred {e}")
 
-def check_api_key_and_ip():
+def check_api_key_and_device():
     api_key = request.headers.get("X-Api-Key")
-    client_ip = request.remote_addr
+    device_id = request.headers.get("X-Device-ID")
+    client_ip = request.remote_addr  # IP nadal logowane dla informacji
+    
     if api_key != API_KEY:
-        log_to_memory_and_file("WARNING", f"Unauthorized access attempt from {client_ip}")
+        log_to_memory_and_file("WARNING", f"Unauthorized access attempt from IP {client_ip}")
         return jsonify({"error": "Unauthorized"}), 401
-    if client_ip not in KNOWN_IPS:
-        send_alert(client_ip)
-        log_to_memory_and_file("WARNING", f"Unknown IP access: {client_ip}")
-        return jsonify({"warning": f"IP {client_ip} unknown"}), 403
+    
+    if not device_id:
+        log_to_memory_and_file("WARNING", f"No device ID provided from IP {client_ip}")
+        return jsonify({"error": "Device ID required"}), 400
+    
+    if device_id not in KNOWN_DEVICE_IDS:
+        send_alert(device_id, client_ip)
+        log_to_memory_and_file("WARNING", f"Unknown device ID: {device_id} from IP {client_ip}")
+        return jsonify({"warning": f"Device {device_id} unknown"}), 403
+    
     return None
 
 @app.route("/list", methods=["GET"])
 def list_files():
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     folder_path = request.args.get("folder", "")
@@ -89,23 +95,23 @@ def list_files():
     if not target_folder.startswith(base_upload_folder):
         log_to_memory_and_file("WARNING", f"Invalid folder path attempted: {folder_path}")
         return jsonify({"error": "Invalid folder path"}), 400
+    
     items = []
     for root, dirs, files_in_dir in os.walk(target_folder):
         for dir_name in dirs:
-            full_path = os.path.join(root, dir_name) + "/"
-            relative_path = os.path.relpath(full_path, base_upload_folder)
-            items.append(relative_path)
+            relative_path = os.path.relpath(os.path.join(root, dir_name), base_upload_folder)
+            items.append(relative_path + "/")
         for file in files_in_dir:
-            full_path = os.path.join(root, file)
-            relative_path = os.path.relpath(full_path, base_upload_folder)
+            relative_path = os.path.relpath(os.path.join(root, file), base_upload_folder)
             items.append(relative_path)
         break
-    log_to_memory_and_file("INFO", f"Listed items in {folder_path}: {items}")
+    
+    log_to_memory_and_file("INFO", "User listed files")
     return jsonify({"files": items})
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     file = request.files["file"]
@@ -124,7 +130,7 @@ def upload_file():
 
 @app.route("/download/<path:filename>", methods=["GET"])
 def download_file(filename):
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     base_upload_folder = os.path.abspath(UPLOAD_FOLDER)
@@ -140,7 +146,7 @@ def download_file(filename):
 
 @app.route("/delete/<path:filename>", methods=["DELETE"])
 def delete_file(filename):
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     base_upload_folder = os.path.abspath(UPLOAD_FOLDER)
@@ -157,7 +163,7 @@ def delete_file(filename):
 
 @app.route("/move/<path:filename>", methods=["POST"])
 def move_file(filename):
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     new_name = request.json.get("new_name")
@@ -183,7 +189,7 @@ server_variable = "Default Value"
 
 @app.route("/update_variable", methods=["POST"])
 def update_variable():
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     data = request.json
@@ -198,14 +204,14 @@ def update_variable():
 
 @app.route("/get_variable", methods=["GET"])
 def get_variable():
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     return jsonify({"server_variable": server_variable})
 
 @app.route("/get_logs", methods=["GET"])
 def get_logs():
-    auth_error = check_api_key_and_ip()
+    auth_error = check_api_key_and_device()
     if auth_error:
         return auth_error
     return jsonify({"logs": "".join(log_messages)})

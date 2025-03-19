@@ -25,7 +25,7 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     _loadFiles();
   }
 
-  bool isFolder(String path) => !path.contains('.');
+  bool isFolder(String path) => path.endsWith('/');
 
   void _loadFiles({String folderPath = ""}) async {
     final fileList = await widget.apiService.getFiles(folderPath: folderPath);
@@ -105,7 +105,7 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
   }
 
   void _handleTap(String path) {
-    if (path.endsWith('/')) {
+    if (isFolder(path)) {
       _loadFiles(folderPath: path);
     } else {
       _downloadFile(path);
@@ -153,9 +153,18 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
-                    final parentFolder = currentFolder.split('/').reversed.skip(1).toList().reversed.join('/');
+                    final parentFolder = currentFolder.endsWith('/')
+                    ? currentFolder.substring(0, currentFolder.length - 1)
+                    .split('/')
+                    .reversed
+                    .skip(1)
+                    .toList()
+                    .reversed
+                    .join('/')
+                    : currentFolder.split('/').reversed.skip(1).toList().reversed.join('/');
                     _loadFiles(folderPath: parentFolder);
                   },
+                  
                 ),
               Expanded(
                 child: Text(
