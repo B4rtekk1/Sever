@@ -9,11 +9,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
-API_KEY = "APIKEY123"  # Klucz API
-KNOWN_DEVICE_IDS = ["windows_device_id_example", "android_device_id_example"]  # Lista znanych ID urządzeń
-EMAIL_SENDER = "bartoszkasyna@gmail.com"  # Gmail nadawcy
-EMAIL_PASSWORD = "#### #### #### ####"  # Hasło aplikacji Gmail
-EMAIL_RECEIVER = "bartoszkasyna@gmail.com"  # Odbiorca
+API_KEY = "APIKEY123"
+KNOWN_DEVICE_IDS = ["windows_device_id_example", "android_device_id_example"]
+EMAIL_SENDER = "bartoszkasyna@gmail.com"
+EMAIL_PASSWORD = "#### #### #### ####"
+EMAIL_RECEIVER = "bartoszkasyna@gmail.com"
 LOG_FILE = "ServerLogs/server_logs.txt"
 
 log_messages = []
@@ -67,7 +67,7 @@ def send_alert(device_id, ip):
 def check_api_key_and_device():
     api_key = request.headers.get("X-Api-Key")
     device_id = request.headers.get("X-Device-ID")
-    client_ip = request.remote_addr  # IP nadal logowane dla informacji
+    client_ip = request.remote_addr
     
     if api_key != API_KEY:
         log_to_memory_and_file("WARNING", f"Unauthorized access attempt from IP {client_ip}")
