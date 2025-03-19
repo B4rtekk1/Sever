@@ -22,6 +22,12 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
   @override
   void initState() {
     super.initState();
+    _initializeAndLoadFiles();
+    _loadFiles();
+  }
+
+  Future<void> _initializeAndLoadFiles() async {
+    await widget.apiService.init();
     _loadFiles();
   }
 

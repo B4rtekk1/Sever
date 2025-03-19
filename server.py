@@ -10,9 +10,9 @@ from datetime import datetime
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 API_KEY = "APIKEY123"
-KNOWN_DEVICE_IDS = ["windows_device_id_example", "android_device_id_example"]
+KNOWN_DEVICE_IDS = ["{1234567890abcdef}", "1234567890"]
 EMAIL_SENDER = "bartoszkasyna@gmail.com"
-EMAIL_PASSWORD = "#### #### #### ####"
+EMAIL_PASSWORD = "rwcu iovk ehbw lhwj"
 EMAIL_RECEIVER = "bartoszkasyna@gmail.com"
 LOG_FILE = "ServerLogs/server_logs.txt"
 
@@ -26,6 +26,11 @@ file_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter) 
+logger.addHandler(console_handler)
 
 def load_logs_from_file():
     global log_messages

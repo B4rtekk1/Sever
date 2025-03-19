@@ -6,10 +6,17 @@ class ApiService {
   final Dio _dio = Dio();
   final String baseUrl = "http://192.168.0.22:5000";
   final String apiKey = "APIKEY123";
+  bool isInitialized = false;
 
   ApiService() {
     _dio.options.headers["X-API-KEY"] = apiKey;
-    _addDeviceIdHeader();
+  }
+
+  Future<void> init() async {
+    if (!isInitialized) {
+      await _addDeviceIdHeader();
+      isInitialized = true;
+    }
   }
 
   Future<void> _addDeviceIdHeader() async {
@@ -33,6 +40,7 @@ class ApiService {
   }
 
   Future<List<String>> getFiles({String folderPath = ""}) async {
+    await init();
     try {
       final response = await _dio.get(
         "$baseUrl/list",
@@ -46,6 +54,7 @@ class ApiService {
   }
 
   Future<String> uploadFile(File file, String folder) async {
+    await init();
     try {
       FormData formData = FormData.fromMap({
         "file": await MultipartFile.fromFile(file.path, filename: file.path.split("/").last),
@@ -60,6 +69,7 @@ class ApiService {
   }
 
   Future<void> downloadFile(String filename, String savePath) async {
+    await init();
     try {
       final directory = Directory(savePath).parent;
       if (!await directory.exists()) {
@@ -89,6 +99,7 @@ class ApiService {
   }
 
   Future<String> getServerVariable() async {
+    await init();
     try {
       final response = await _dio.get("$baseUrl/get_variable");
       return response.data["server_variable"];
@@ -99,6 +110,7 @@ class ApiService {
   }
 
   Future<String> updateServerVariable(String newValue) async {
+    await init();
     try {
       final response = await _dio.post(
         "$baseUrl/update_variable",
@@ -112,6 +124,7 @@ class ApiService {
   }
 
   Future<String> getLogs() async {
+    await init();
     try {
       final response = await _dio.get("$baseUrl/get_logs");
       return response.data["logs"];
