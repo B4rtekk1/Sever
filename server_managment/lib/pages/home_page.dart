@@ -7,10 +7,10 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.apiService});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   String serverVariable = "Loading...";
 
   @override
@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
 
   void _updateServerVariable() async {
     final newValue = await widget.apiService.updateServerVariable("Nowa wartość ${DateTime.now()}");
+    if(!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(newValue)));
     _loadServerVariable();
   }

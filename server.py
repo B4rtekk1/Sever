@@ -10,9 +10,9 @@ from datetime import datetime
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 API_KEY = "APIKEY123"
-KNOWN_DEVICE_IDS = ["{1234567890abcdef}", "1234567890"]
+KNOWN_DEVICE_IDS = ["{123pythonpatrzy}", "1234567890"]
 EMAIL_SENDER = "bartoszkasyna@gmail.com"
-EMAIL_PASSWORD = "rwcu iovk ehbw lhwj"
+EMAIL_PASSWORD = "#### #### #### ####"
 EMAIL_RECEIVER = "bartoszkasyna@gmail.com"
 LOG_FILE = "ServerLogs/server_logs.txt"
 
@@ -115,6 +115,7 @@ def list_files():
     return jsonify({"files": items})
 
 @app.route("/upload", methods=["POST"])
+@app.route("/upload", methods=["POST"])
 def upload_file():
     auth_error = check_api_key_and_device()
     if auth_error:
@@ -127,7 +128,9 @@ def upload_file():
         log_to_memory_and_file("WARNING", f"Invalid folder path attempted: {requested_folder}")
         return jsonify({"error": "Invalid folder path"}), 400
     os.makedirs(full_path, exist_ok=True)
-    file_path = os.path.join(full_path, file.filename)
+    # Używamy tylko nazwy pliku, bez ścieżki
+    filename = os.path.basename(file.filename)
+    file_path = os.path.join(full_path, filename)
     file.save(file_path)
     relative_path = os.path.relpath(file_path, base_upload_folder)
     log_to_memory_and_file("INFO", f"Uploaded file: {relative_path}")

@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:logger/logger.dart';
 
 class ApiService {
   final Dio _dio = Dio();
   final String baseUrl = "http://192.168.0.22:5000";
   final String apiKey = "APIKEY123";
   bool isInitialized = false;
+  static Logger logger = Logger();
 
   ApiService() {
     _dio.options.headers["X-API-KEY"] = apiKey;
@@ -33,9 +35,9 @@ class ApiService {
 
     if (deviceId != null) {
       _dio.options.headers["X-Device-ID"] = deviceId;
-      print("Device ID set: $deviceId");
+      logger.i("Device ID set: $deviceId");
     } else {
-      print("Could not retrieve device ID");
+      logger.e("Could not retrieve device ID");
     }
   }
 
@@ -48,7 +50,7 @@ class ApiService {
       );
       return List<String>.from(response.data["files"]);
     } catch (e) {
-      print("Błąd podczas pobierania plików: $e");
+      logger.e("Błąd podczas pobierania plików: $e");
       return [];
     }
   }
@@ -61,9 +63,10 @@ class ApiService {
         "folder": folder,
       });
       final response = await _dio.post("$baseUrl/upload", data: formData);
+      logger.d(response.data["message"]);
       return response.data["message"];
     } catch (e) {
-      print("Błąd podczas wysyłania pliku: $e");
+      logger.i("Błąd podczas wysyłania pliku: $e");
       return "Błąd: $e";
     }
   }
@@ -81,19 +84,19 @@ class ApiService {
         savePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
-            print("Postęp pobierania: ${(received / total * 100).toStringAsFixed(0)}%");
+            logger.i("Postęp pobierania: ${(received / total * 100).toStringAsFixed(0)}%");
           }
         },
       );
 
       final file = File(savePath);
       if (await file.exists()) {
-        print("Plik $filename został pomyślnie pobrany do $savePath");
+        logger.i("Plik $filename został pomyślnie pobrany do $savePath");
       } else {
         throw Exception("Plik $filename nie został zapisany w $savePath");
       }
     } catch (e) {
-      print("Błąd podczas pobierania pliku: $e");
+      logger.e("Błąd podczas pobierania pliku: $e");
       rethrow;
     }
   }
@@ -104,7 +107,7 @@ class ApiService {
       final response = await _dio.get("$baseUrl/get_variable");
       return response.data["server_variable"];
     } catch (e) {
-      print("Błąd pobierania zmiennej: $e");
+      logger.e("Błąd pobierania zmiennej: $e");
       return "Błąd: $e";
     }
   }
@@ -118,7 +121,7 @@ class ApiService {
       );
       return response.data["message"];
     } catch (e) {
-      print("Błąd aktualizacji zmiennej: $e");
+      logger.e("Błąd aktualizacji zmiennej: $e");
       return "Błąd: $e";
     }
   }
@@ -129,7 +132,7 @@ class ApiService {
       final response = await _dio.get("$baseUrl/get_logs");
       return response.data["logs"];
     } catch (e) {
-      print("Błąd pobierania logów: $e");
+      logger.e("Błąd pobierania logów: $e");
       return "Błąd: $e";
     }
   }

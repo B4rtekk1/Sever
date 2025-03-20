@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:server_managment/models/FilesIcons.dart';
 import 'dart:io';
 import 'package:server_managment/services/api_service.dart';
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:logger/logger.dart';
 
 class FilesExplorerPage extends StatefulWidget {
   final ApiService apiService;
@@ -12,12 +14,13 @@ class FilesExplorerPage extends StatefulWidget {
   const FilesExplorerPage({super.key, required this.apiService});
 
   @override
-  _FilesExplorerPageState createState() => _FilesExplorerPageState();
+  FilesExplorerPageState createState() => FilesExplorerPageState();
 }
 
-class _FilesExplorerPageState extends State<FilesExplorerPage> {
+class FilesExplorerPageState extends State<FilesExplorerPage> {
   List<String> files = [];
   String currentFolder = "";
+  final Logger logger = Logger();
 
   @override
   void initState() {
@@ -46,6 +49,7 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     if (result != null) {
       File file = File(result.files.single.path!);
       final message = await widget.apiService.uploadFile(file, currentFolder);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       _loadFiles(folderPath: currentFolder);
     }
@@ -79,7 +83,7 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
   void _downloadFile(String filename) async {
     try {
       String savePath = await _getDownloadPath(filename);
-      print("Próba pobrania pliku: $filename do $savePath");
+      logger.i("Próba pobrania pliku: $filename do $savePath");
       final directory = Directory(savePath).parent;
       if (!await directory.exists()) {
         await directory.create(recursive: true);
@@ -89,21 +93,25 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
 
       File downloadedFile = File(savePath);
       if (await downloadedFile.exists() && await downloadedFile.length() > 0) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Pobrano: ${filename.split('/').last}")),
         );
         final result = await OpenFile.open(savePath);
         if (result.type != ResultType.done) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Nie można otworzyć pliku: ${result.message}")),
           );
         }
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Plik ${filename.split('/').last} nie został pobrany lub jest pusty")),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Błąd pobierania: $e")),
       );
@@ -118,103 +126,91 @@ class _FilesExplorerPageState extends State<FilesExplorerPage> {
     }
   }
 
-  IconData _getIcon(String path) {
+  Widget _getIcon(String path) {
     if (isFolder(path)) {
-      
-      return Icons.folder;
+      return Filesicons.getIconForExtension("folder");
     }
     final extension = path.split('.').last.toLowerCase();
-    switch (extension) {
-      case 'pdf':
-        return Icons.picture_as_pdf;
-      case 'txt':
-        return Icons.text_snippet;
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-        return Icons.image;
-      case 'doc':
-      case 'docx':
-        return Icons.description;
-      case 'mp3':
-      case 'wav':
-        return Icons.music_note;
-      case 'mp4':
-      case 'mov':
-        return Icons.video_file;
-      default:
-        return Icons.insert_drive_file;
-    }
+    return Filesicons.getIconForExtension(extension);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              if (currentFolder.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    final parentFolder = currentFolder.endsWith('/')
-                    ? currentFolder.substring(0, currentFolder.length - 1)
-                    .split('/')
-                    .reversed
-                    .skip(1)
-                    .toList()
-                    .reversed
-                    .join('/')
-                    : currentFolder.split('/').reversed.skip(1).toList().reversed.join('/');
-                    _loadFiles(folderPath: parentFolder);
-                  },
-                  
-                ),
-              Expanded(
-                child: Text(
-                  "Folder: ${currentFolder.isEmpty ? 'Root' : currentFolder}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+        Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  if (currentFolder.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        final parentFolder = currentFolder.endsWith('/')
+                            ? currentFolder
+                                .substring(0, currentFolder.length - 1)
+                                .split('/')
+                                .reversed
+                                .skip(1)
+                                .toList()
+                                .reversed
+                                .join('/')
+                            : currentFolder.split('/').reversed.skip(1).toList().reversed.join('/');
+                        _loadFiles(folderPath: parentFolder);
+                      },
+                    ),
+                  Expanded(
+                    child: Text(
+                      currentFolder.isEmpty ? "My drive" : currentFolder,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: FutureBuilder<List<String>>(
-            future: widget.apiService.getFiles(folderPath: currentFolder),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return const Center(child: Text('Błąd połączenia'));
-              }
-              final files = snapshot.data ?? [];
-              return ListView.builder(
-                itemCount: files.length,
-                itemBuilder: (context, index) {
-                  final file = files[index];
-                  String displayName = file.endsWith('/')
-                      ? file.substring(0, file.length - 1).split('/').last
-                      : file.split('/').last;
-                  return ListTile(
-                    leading: Icon(_getIcon(file)),
-                    title: Text(displayName),
-                    subtitle: Text(file),
-                    onTap: () => _handleTap(file),
+            ),
+            Expanded(
+              child: FutureBuilder<List<String>>(
+                future: widget.apiService.getFiles(folderPath: currentFolder),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Błąd połączenia'));
+                  }
+                  final files = snapshot.data ?? [];
+                  return ListView.builder(
+                    itemCount: files.length,
+                    itemBuilder: (context, index) {
+                      final file = files[index];
+                      String displayName = file.endsWith('/')
+                          ? file.substring(0, file.length - 1).split('/').last
+                          : file.split('/').last;
+                      return ListTile(
+                        leading: _getIcon(file),
+                        title: Text(displayName),
+                        subtitle: Text(file),
+                        onTap: () => _handleTap(file),
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton(
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
             onPressed: _uploadFile,
-            child: const Text("Wyślij plik"),
+            tooltip: 'Upload file',
+            foregroundColor: Colors.black,
+            backgroundColor: Colors.white,
+            shape: CircleBorder(),
+            child: const Icon(Icons.add),
           ),
         ),
       ],
