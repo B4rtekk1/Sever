@@ -12,7 +12,7 @@ UPLOAD_FOLDER = "uploads"
 API_KEY = "APIKEY123"
 KNOWN_DEVICE_IDS = ["{123pythonpatrzy}", "1234567890"]
 EMAIL_SENDER = "bartoszkasyna@gmail.com"
-EMAIL_PASSWORD = "#### #### #### ####"
+EMAIL_PASSWORD = "#############"
 EMAIL_RECEIVER = "bartoszkasyna@gmail.com"
 LOG_FILE = "ServerLogs/server_logs.txt"
 
